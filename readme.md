@@ -21,6 +21,11 @@
 - load page contents lazily based on page faults.
 - bolt implements its own structure on top, with meta pages, root page node - top of B+tree,
 
+- buckets let you use a key-value store within a key-value store, like a namespace.
+- shard is a partition of your database
+- shards are building blocks of horizontal scaling
+- server may hold one or more shards
+
 - use as if its a slice of bytes instead of read and write operations.
 - cow, and single writer transactions
 
