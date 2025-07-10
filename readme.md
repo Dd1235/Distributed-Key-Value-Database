@@ -2,6 +2,8 @@
 
 - [] implement with static sharding
 
+- sharding.toml acts a static cluster topology descriptor, encodes horizontal partitioning schema, local simulation of distributed coordination using loopback ips
+
 - Bolt DB is a pure go key-value database stored in the filesystem, not server based like Redis or Cassandra.
 - ACID compliant, supports transactions.
 - All writes must occur in a read write transaction adn all reads must occur in a read transaction

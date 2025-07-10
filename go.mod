@@ -5,6 +5,7 @@ go 1.23
 toolchain go1.23.11
 
 require (
+	github.com/BurntSushi/toml v1.5.0
 	github.com/stretchr/testify v1.10.0
 	go.etcd.io/bbolt v1.4.2
 )
