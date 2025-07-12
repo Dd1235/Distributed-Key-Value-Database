@@ -65,8 +65,23 @@ func main() {
 		go replication.ClientLoop(dbInstance, leaderAddr)
 	}
 
+	shorthand := map[string]string{
+		"Hyderabad": "Hyd",
+		"Bangalore": "Blr",
+		"Mumbai":    "Bom",
+		"Delhi":     "Del",
+	}
+
+	label := shorthand[*shardName]
+	if label == "" {
+		label = *shardName
+	}
+	if *replica {
+		label += " Replica"
+	}
+
 	// Create HTTP server handlers
-	srv := transport.NewServer(dbInstance, shards)
+	srv := transport.NewServer(dbInstance, shards, label)
 
 	http.HandleFunc("/get", srv.GetHandler)
 	http.HandleFunc("/set", srv.SetHandler)

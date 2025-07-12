@@ -3,13 +3,25 @@ set -e
 
 cd $(dirname "$0")
 
+rm -rf data/
+mkdir -p data
+
 # Clean up any existing kv server processes
 pkill -f "go run ./cmd/kv" || true
 pkill -f "./kvserver" || true
 sleep 0.2
 
+cleanup() {
+  echo ""
+  echo "Caught SIGINT or exit. Cleaning up..."
+  pkill -f "go run ./cmd/kv" || true
+  pkill -f "./kvserver" || true
+  rm -rf data/
+  echo "Cleaned up data/ and stopped servers."
+  exit 0
+}
+trap cleanup SIGINT SIGTERM EXIT
 
-mkdir -p data
 
 # Hyderabad
 go run ./cmd/kv -db-location=data/hyderabad.db -http-addr=127.0.0.2:8080 -config-file=sharding.toml -shard=Hyderabad &
@@ -28,5 +40,6 @@ go run ./cmd/kv -db-location=data/delhi.db -http-addr=127.0.0.5:8080 -config-fil
 go run ./cmd/kv -db-location=data/delhi-r.db -http-addr=127.0.0.55:8080 -config-file=sharding.toml -shard=Delhi -replica &
 
 wait
+
 
 

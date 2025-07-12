@@ -41,7 +41,7 @@ func createShardServer(t *testing.T, idx int, addrs map[int]string) (*db.Databas
 		CurIdx: idx,
 	}
 
-	server := transport.NewServer(db, shards)
+	server := transport.NewServer(db, shards, fmt.Sprintf("shard-%d", idx))
 	return db, server
 }
 
