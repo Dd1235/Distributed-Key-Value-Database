@@ -47,7 +47,7 @@ func (s *Server) GetHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Printf("➡️ GET /get?key=%s → target shard: %d | current shard: %d\n", key, shard, s.shards.CurIdx)
 
 	if shard != s.shards.CurIdx {
-		fmt.Println("🔁 Redirecting GET request to correct shard")
+		// fmt.Println("🔁 Redirecting GET request to correct shard")
 		s.redirect(shard, w, r)
 		return
 	}
@@ -67,7 +67,7 @@ func (s *Server) SetHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Printf("➡️ PUT /set?key=%s&value=%s → target shard: %d | current shard: %d\n", key, value, shard, s.shards.CurIdx)
 
 	if shard != s.shards.CurIdx {
-		fmt.Println("🔁 Redirecting SET request to correct shard")
+		// fmt.Println("🔁 Redirecting SET request to correct shard")
 		s.redirect(shard, w, r)
 		return
 	}
@@ -82,9 +82,9 @@ func (s *Server) DeleteExtraKeysHandler(w http.ResponseWriter, r *http.Request) 
 	// fmt.Printf("🧹 PURGE: Checking for foreign keys on shard %d...\n", s.shards.CurIdx)
 	err := s.db.DeleteExtraKeys(func(key string) bool {
 		shouldDelete := s.shards.Index(key) != s.shards.CurIdx
-		if shouldDelete {
-			fmt.Printf("🗑️  Purging key=%s (belongs to shard %d)\n", key, s.shards.Index(key))
-		}
+		// if shouldDelete {
+		// 	// fmt.Printf("🗑️  Purging key=%s (belongs to shard %d)\n", key, s.shards.Index(key))
+		// }
 		return shouldDelete
 	})
 	fmt.Fprintf(w, "Error = %v", err)

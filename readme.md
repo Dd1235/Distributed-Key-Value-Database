@@ -33,53 +33,7 @@ shard 3: Delhi - `127.0.0.5:8080`, replica: `127.0.55:8080`
 🔁 Redirecting SET request to correct shard
 ➡️ PUT /set?key=key-7986636&value=value-2 → target shard: 2 | current shard: 2
 ✅ SET served locally: key=key-7986636, value=value-2, error=<nil>
-➡️ PUT /set?key=key-125779434&value=value-3 → target shard: 3 | current shard: 0
-🔁 Redirecting SET request to correct shard
-➡️ PUT /set?key=key-125779434&value=value-3 → target shard: 3 | current shard: 3
-✅ SET served locally: key=key-125779434, value=value-3, error=<nil>
-➡️ PUT /set?key=key-291864019&value=value-4 → target shard: 1 | current shard: 0
-🔁 Redirecting SET request to correct shard
-➡️ PUT /set?key=key-291864019&value=value-4 → target shard: 1 | current shard: 1
-2025/07/12 15:17:24 Deleting key="key-125779434", value="value-3" from replication queue on "127.0.0.5:8080"
-🧼 REPLICATION ACK: Deleting key=key-125779434, value=value-3 from queue
-✅ SET served locally: key=key-291864019, value=value-4, error=<nil>
-✅ REPLICATION DELETE successful
-➡️ PUT /set?key=key-550710753&value=value-5 → target shard: 0 | current shard: 0
-2025/07/12 15:17:24 Deleting key="key-539287336", value="value-1" from replication queue on "127.0.0.5:8080"
-🧼 REPLICATION ACK: Deleting key=key-539287336, value=value-1 from queue
-✅ SET served locally: key=key-550710753, value=value-5, error=<nil>
-✅ REPLICATION DELETE successful
-➡️ PUT /set?key=key-51863328&value=value-6 → target shard: 3 | current shard: 0
-🔁 Redirecting SET request to correct shard
-➡️ PUT /set?key=key-51863328&value=value-6 → target shard: 3 | current shard: 3
-✅ SET served locally: key=key-51863328, value=value-6, error=<nil>
-➡️ PUT /set?key=key-546221475&value=value-7 → target shard: 1 | current shard: 0
-🔁 Redirecting SET request to correct shard
-➡️ PUT /set?key=key-546221475&value=value-7 → target shard: 1 | current shard: 1
-✅ SET served locally: key=key-546221475, value=value-7, error=<nil>
-➡️ PUT /set?key=key-63757650&value=value-8 → target shard: 2 | current shard: 0
-🔁 Redirecting SET request to correct shard
-➡️ PUT /set?key=key-63757650&value=value-8 → target shard: 2 | current shard: 2
-✅ SET served locally: key=key-63757650, value=value-8, error=<nil>
-➡️ PUT /set?key=key-552286593&value=value-9 → target shard: 0 | current shard: 0
-✅ SET served locally: key=key-552286593, value=value-9, error=<nil>
-➡️ PUT /set?key=key-676220700&value=value-10 → target shard: 3 | current shard: 0
-🔁 Redirecting SET request to correct shard
-➡️ PUT /set?key=key-676220700&value=value-10 → target shard: 3 | current shard: 3
-2025/07/12 15:17:24 Deleting key="key-550710753", value="value-5" from replication queue on "127.0.0.2:8080"
-🧼 REPLICATION ACK: Deleting key=key-550710753, value=value-5 from queue
-2025/07/12 15:17:24 Deleting key="key-291864019", value="value-4" from replication queue on "127.0.0.3:8080"
-2025/07/12 15:17:24 Deleting key="key-63757650", value="value-8" from replication queue on "127.0.0.4:8080"
-🧼 REPLICATION ACK: Deleting key=key-63757650, value=value-8 from queue
-🧼 REPLICATION ACK: Deleting key=key-291864019, value=value-4 from queue
-✅ SET served locally: key=key-676220700, value=value-10, error=<nil>
-✅ REPLICATION DELETE successful
-✅ REPLICATION DELETE successful
-✅ REPLICATION DELETE successful
-2025/07/12 15:17:24 Deleting key="key-552286593", value="value-9" from replication queue on "127.0.0.2:8080"
-🧼 REPLICATION ACK: Deleting key=key-552286593, value=value-9 from queue
-2025/07/12 15:17:24 Deleting key="key-546221475", value="value-7" from replication queue on "127.0.0.3:8080"
-2025/07/12 15:17:24 Deleting key="key-7986636", value="value-2" from replication queue on "127.0.0.4:8080"
+... ( i am removing some of the outputs for brevity)
 🧼 REPLICATION ACK: Deleting key=key-7986636, value=value-2 from queue
 🧼 REPLICATION ACK: Deleting key=key-546221475, value=value-7 from queue
 ✅ REPLICATION DELETE successful
@@ -183,6 +137,58 @@ Cleaned up data/ and stopped servers.
 Caught SIGINT or exit. Cleaning up...
 Cleaned up data/ and stopped servers.
 ```
+
+On running `run_benchmark.sh`:
+
+```bash
+ ./run_benchmark.sh
+Cleaning up...
+Rebuilding server binary...
+Rebuilding benchmark client...
+Launching single KV server on 127.0.0.1:8080 (Hyderabad)...
+2025/07/12 16:11:21 Loaded shard config: "Hyderabad" (Index: 0) | Total shards: 1
+2025/07/12 16:11:21 Serving on http://127.0.0.1:8080 ...
+Running benchmark...
+ Benchmarking http://127.0.0.1:8080 | Writes: 500 × 2 threads | Reads: 5000
+→ [write] Avg: 12.0502ms | QPS: 83.0 | Max: 18.531333ms | Min: 7.644167ms
+→ [write] Avg: 12.065683ms | QPS: 82.9 | Max: 19.015625ms | Min: 7.534375ms
+2025/07/12 16:11:28 ✔ Write Phase Complete: 165.9 QPS total | 1000 keys written
+→ [read] Avg: 50.959µs | QPS: 19623.3 | Max: 4.665041ms | Min: 22.75µs
+→ [read] Avg: 51.065µs | QPS: 19582.8 | Max: 4.53075ms | Min: 22.083µs
+2025/07/12 16:11:29 ✔ Read Phase Complete: 39206.1 QPS total
+Cleaning up...
+./run_benchmark.sh: line 26: 46253 Terminated: 15          ./kvserver -db-location=data/hyd.db -http-addr=127.0.0.1:8080 -config-file=only_one_shard.toml -shard=Hyderabad
+```
+
+We benchmarked the key-value store using a single shard configuration (only_one_shard.toml) running on 127.0.0.1:8080. The benchmark client (benchclient) performs 500 write operations and 5000 read operations using 2 concurrent threads. Results showed ~165 QPS for writes and ~39,000 QPS for reads.
+
+On running `run_full_benchmark.sh`:
+
+```bash
+...(all the deletes key value from replication queue outputs)
+2025/07/12 16:20:47 Deleting key="key-297850", value="value-766822" from replication queue on "127.0.0.4:8080"
+2025/07/12 16:20:47 Deleting key="key-376594", value="value-665457" from replication queue on "127.0.0.3:8080"
+→ [read] Avg: 279.92µs | QPS: 3572.4 | Max: 31.108625ms | Min: 25.333µs
+→ [read] Avg: 280.82µs | QPS: 3561.0 | Max: 30.687083ms | Min: 28.833µs
+→ [read] Avg: 280.824µs | QPS: 3560.9 | Max: 30.725292ms | Min: 27.416µs
+2025/07/12 16:20:47 Deleting key="key-471589", value="value-209154" from replication queue on "127.0.0.5:8080"
+→ [read] Avg: 281.383µs | QPS: 3553.9 | Max: 30.647042ms | Min: 28.625µs
+2025/07/12 16:20:47 ✔ Read Phase Complete: 14248.2 QPS total
+Cleaning up all servers and data...
+2025/07/12 16:20:47 Deleting key="key-323140", value="value-611417" from replication queue on "127.0.0.2:8080"
+2025/07/12 16:20:47 Deleting key="key-695005", value="value-224563" from replication queue on "127.0.0.4:8080"
+2025/07/12 16:20:47 Deleting key="key-623942", value="value-7097" from replication queue on "127.0.0.3:8080"
+./run_full_benchmark.sh: line 44: 47958 Terminated: 15          "$KV_BIN" -db-location=data/hyd.db -http-addr=127.0.0.2:8080 -config-file=sharding.toml -shard=Hyderabad
+./run_full_benchmark.sh: line 44: 47959 Terminated: 15          "$KV_BIN" -db-location=data/hyd-r.db -http-addr=127.0.0.22:8080 -config-file=sharding.toml -shard=Hyderabad -replica
+./run_full_benchmark.sh: line 44: 47960 Terminated: 15          "$KV_BIN" -db-location=data/blr.db -http-addr=127.0.0.3:8080 -config-file=sharding.toml -shard=Bangalore
+./run_full_benchmark.sh: line 44: 47961 Terminated: 15          "$KV_BIN" -db-location=data/blr-r.db -http-addr=127.0.0.33:8080 -config-file=sharding.toml -shard=Bangalore -replica
+./run_full_benchmark.sh: line 44: 47962 Terminated: 15          "$KV_BIN" -db-location=data/bom.db -http-addr=127.0.0.4:8080 -config-file=sharding.toml -shard=Mumbai
+./run_full_benchmark.sh: line 44: 47963 Terminated: 15          "$KV_BIN" -db-location=data/bom-r.db -http-addr=127.0.0.44:8080 -config-file=sharding.toml -shard=Mumbai -replica
+./run_full_benchmark.sh: line 44: 47964 Terminated: 15          "$KV_BIN" -db-location=data/del.db -http-addr=127.0.0.5:8080 -config-file=sharding.toml -shard=Delhi
+./run_full_benchmark.sh: line 44: 47965 Terminated: 15          "$KV_BIN" -db-location=data/del-r.db -http-addr=127.0.0.55:8080 -config-file=sharding.toml -shard=Delhi -replica
+```
+
+This benchmark simulates a distributed key-value store setup with 4 primary shards—Hyderabad, Bangalore, Mumbai, and Delhi—each with one replica. The run_full_benchmark.sh script launches all servers and replicas using their respective shard configurations and performs concurrent key-value SET operations followed by high-frequency GET requests via the benchclient. During the run, each primary shard logs replication queue deletions as keys are successfully pulled by replicas. The system achieved a peak aggregate read throughput of 14.2k QPS, with each thread maintaining ~3.5k QPS and minimal tail latency. After benchmarking, all servers and data are gracefully cleaned up.
 
 This distributed key-value database implements a horizontally scalable architecture with the following key components and concepts:
 
@@ -320,6 +326,9 @@ replicas = ["127.0.0.22:8080"]
 Ensure you have Go installed on your machine.
 `echo 'export PATH="$HOME/go/bin:$PATH"' >> ~/.zshrc`
 `source ~/.zshrc`
+
+You may use local binaries instead of the go install way.
+
 `go install ./cmd/kv`
 `go install ./cmd/benchclient`
 `which kv` # should show the path to the binary
@@ -360,6 +369,8 @@ go run ./cmd/kv \
   -config-file=sharding.toml \
   -shard=Hyderabad
 ```
+
+You might need to run `chmod +x launch.sh seed_shard.sh run_benchmark.sh run_full_benchmark.sh` to make give permission to the scripts to execute. Or some equivalent of this command depending on your OS.
 
 1.  Clone the repository:
 
