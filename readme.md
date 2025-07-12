@@ -22,6 +22,7 @@ shard 3: Delhi - `127.0.0.5:8080`, replica: `127.0.55:8080`
 
 - This one is on adding print statements to the endpoints in `transport/transport.go` to show the flow of requests and responses, especially for replication and sharding. I seeded using `./seed_shard.sh`, that puts 10 random keys in only one of the shards(redirects happen).
 - Emojis also added for readability, these are commented out for brevity now, so you can uncomment them if you want to see the output with emojis.
+- Note: I've also commented out the print statement in `replication/replication.go` that prints when deletion from the replication queue happens, so you can uncomment that if you want to see the output with that as well.
 
 ```bash
 2025/07/12 15:17:12 Serving on http://127.0.0.33:8080 ...
@@ -166,29 +167,25 @@ On running `run_full_benchmark.sh`:
 
 ```bash
 ...(all the deletes key value from replication queue outputs)
-2025/07/12 16:20:47 Deleting key="key-297850", value="value-766822" from replication queue on "127.0.0.4:8080"
-2025/07/12 16:20:47 Deleting key="key-376594", value="value-665457" from replication queue on "127.0.0.3:8080"
-→ [read] Avg: 279.92µs | QPS: 3572.4 | Max: 31.108625ms | Min: 25.333µs
-→ [read] Avg: 280.82µs | QPS: 3561.0 | Max: 30.687083ms | Min: 28.833µs
-→ [read] Avg: 280.824µs | QPS: 3560.9 | Max: 30.725292ms | Min: 27.416µs
-2025/07/12 16:20:47 Deleting key="key-471589", value="value-209154" from replication queue on "127.0.0.5:8080"
-→ [read] Avg: 281.383µs | QPS: 3553.9 | Max: 30.647042ms | Min: 28.625µs
-2025/07/12 16:20:47 ✔ Read Phase Complete: 14248.2 QPS total
+Running benchmark on Hyderabad (127.0.0.2:8080)...
+ Benchmarking http://127.0.0.2:8080 | Writes: 1000 × 4 threads | Reads: 10000
+→ [write] Avg: 28.859566ms | QPS: 34.7 | Max: 77.029291ms | Min: 9.408ms
+→ [write] Avg: 28.926891ms | QPS: 34.6 | Max: 70.087041ms | Min: 7.948959ms
+→ [write] Avg: 29.031798ms | QPS: 34.4 | Max: 71.002916ms | Min: 6.945208ms
+→ [write] Avg: 29.112827ms | QPS: 34.3 | Max: 82.048792ms | Min: 8.22825ms
+✔ Write Phase Complete: 138.0 QPS total | 4000 keys written
+→ [read] Avg: 258.782µs | QPS: 3864.2 | Max: 18.540125ms | Min: 27.584µs
+→ [read] Avg: 259.21µs | QPS: 3857.9 | Max: 18.448ms | Min: 26.542µs
+→ [read] Avg: 259.659µs | QPS: 3851.2 | Max: 23.526459ms | Min: 22.375µs
+→ [read] Avg: 259.686µs | QPS: 3850.8 | Max: 22.2235ms | Min: 26.375µs
+2025/07/12 20:41:28 ✔ Read Phase Complete: 15424.1 QPS total
 Cleaning up all servers and data...
-2025/07/12 16:20:47 Deleting key="key-323140", value="value-611417" from replication queue on "127.0.0.2:8080"
-2025/07/12 16:20:47 Deleting key="key-695005", value="value-224563" from replication queue on "127.0.0.4:8080"
-2025/07/12 16:20:47 Deleting key="key-623942", value="value-7097" from replication queue on "127.0.0.3:8080"
-./run_full_benchmark.sh: line 44: 47958 Terminated: 15          "$KV_BIN" -db-location=data/hyd.db -http-addr=127.0.0.2:8080 -config-file=sharding.toml -shard=Hyderabad
-./run_full_benchmark.sh: line 44: 47959 Terminated: 15          "$KV_BIN" -db-location=data/hyd-r.db -http-addr=127.0.0.22:8080 -config-file=sharding.toml -shard=Hyderabad -replica
-./run_full_benchmark.sh: line 44: 47960 Terminated: 15          "$KV_BIN" -db-location=data/blr.db -http-addr=127.0.0.3:8080 -config-file=sharding.toml -shard=Bangalore
-./run_full_benchmark.sh: line 44: 47961 Terminated: 15          "$KV_BIN" -db-location=data/blr-r.db -http-addr=127.0.0.33:8080 -config-file=sharding.toml -shard=Bangalore -replica
-./run_full_benchmark.sh: line 44: 47962 Terminated: 15          "$KV_BIN" -db-location=data/bom.db -http-addr=127.0.0.4:8080 -config-file=sharding.toml -shard=Mumbai
-./run_full_benchmark.sh: line 44: 47963 Terminated: 15          "$KV_BIN" -db-location=data/bom-r.db -http-addr=127.0.0.44:8080 -config-file=sharding.toml -shard=Mumbai -replica
-./run_full_benchmark.sh: line 44: 47964 Terminated: 15          "$KV_BIN" -db-location=data/del.db -http-addr=127.0.0.5:8080 -config-file=sharding.toml -shard=Delhi
-./run_full_benchmark.sh: line 44: 47965 Terminated: 15          "$KV_BIN" -db-location=data/del-r.db -http-addr=127.0.0.55:8080 -config-file=sharding.toml -shard=Delhi -replica
+./run_full_benchmark.sh: line 44: 70292 Terminated: 15          "$KV_BIN" -db-location=data/hyd.db -http-addr=127.0.0.2:8080 -config-file=sharding.toml -
+.... (I'm also removing the lines showing termination of processes for brevity)
 ```
 
-This benchmark simulates a distributed key-value store setup with 4 primary shards—Hyderabad, Bangalore, Mumbai, and Delhi—each with one replica. The run_full_benchmark.sh script launches all servers and replicas using their respective shard configurations and performs concurrent key-value SET operations followed by high-frequency GET requests via the benchclient. During the run, each primary shard logs replication queue deletions as keys are successfully pulled by replicas. The system achieved a peak aggregate read throughput of 14.2k QPS, with each thread maintaining ~3.5k QPS and minimal tail latency. After benchmarking, all servers and data are gracefully cleaned up.
+After waiting for all servers to boot, it runs a benchmark targeting the Hyderabad leader node at 127.0.0.2:8080.
+The benchmark performs 1000 writes per thread across 4 threads (total 4000 writes), followed by 10,000 reads. Write requests involve inserting a key-value pair into the leader and replicating it to the corresponding replica. This replication adds latency, which is why write QPS is relatively low at around 138 QPS total, with an average latency of ~29ms per write. In contrast, read operations are much faster, averaging around 259 microseconds per read, with a total throughput of about 15,400 QPS, since reads are served directly by the leader without involving the replica.
 
 This distributed key-value database implements a horizontally scalable architecture with the following key components and concepts:
 
@@ -234,19 +231,6 @@ The system consists of **4 shards** (Hyderabad, Bangalore, Mumbai, Delhi), each 
 - **HTTP API**: RESTful interface for client operations
 - **Custom Binary Protocol**: Internal communication between nodes
 - **JSON Encoding**: For replication coordination messages
-
-### Data Flow Examples
-
-#### Write Operation (SET)
-
-```
-1. Client sends: PUT /set?key=user:123&value=john_doe
-2. System hashes "user:123" → determines shard (e.g., Bangalore)
-3. Request routed to Bangalore leader (127.0.0.3:8080)
-4. Leader writes to local BoltDB (both default and replication buckets)
-5. Replica (127.0.0.33:8080) polls leader for replication queue
-6. Replica applies change and acknowledges deletion from queue
-```
 
 #### Read Operation (GET)
 
@@ -304,14 +288,6 @@ replicas = ["127.0.0.22:8080"]
 - **No Cross-Shard Transactions**: Cannot guarantee consistency across shards
 - **Fixed Shard Count**: Adding/removing shards requires rehashing all data
 - **Network Partition Handling**: Limited handling of network splits
-
-## Features
-
-- **Sharding:** Data is partitioned across multiple shards, allowing for horizontal scaling and improved performance.
-- **Replication:** Each shard has a leader and a set of replicas, ensuring data redundancy and high availability.
-- **Custom Binary Protocol:** A custom binary protocol is used for efficient data transfer between nodes.
-- **HTTP API:** A simple HTTP API is provided for setting, getting, and deleting keys.
-- **Benchmarking Tool:** A benchmarking tool is included for performance testing.
 
 ## Getting Started
 

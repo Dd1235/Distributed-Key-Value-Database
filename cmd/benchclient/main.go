@@ -113,7 +113,9 @@ func benchmarkWrite() []string {
 	}
 
 	wg.Wait()
-	log.Printf("✔ Write Phase Complete: %.1f QPS total | %d keys written\n", totalQPS, len(allKeys))
+	// log.Printf("✔ Write Phase Complete: %.1f QPS total | %d keys written\n", totalQPS, len(allKeys))
+	fmt.Printf("✔ Write Phase Complete: %.1f QPS total | %d keys written\n", totalQPS, len(allKeys))
+
 	return allKeys
 }
 

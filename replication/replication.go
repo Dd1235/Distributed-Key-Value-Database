@@ -120,7 +120,7 @@ func (c *client) deleteFromReplicationQueue(key, value string) error {
 	u.Set("key", key)
 	u.Set("value", value)
 
-	log.Printf("Deleting key=%q, value=%q from replication queue on %q", key, value, c.leaderAddr)
+	// log.Printf("Deleting key=%q, value=%q from replication queue on %q", key, value, c.leaderAddr)
 
 	resp, err := http.Get("http://" + c.leaderAddr + "/delete-replication-key?" + u.Encode())
 	if err != nil {
