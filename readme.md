@@ -1,77 +1,249 @@
-# Distributed Key-Value Store
+# Distributed Key-Value Database
 
-- [] implement with static sharding
+This project implements a distributed key-value database in Go, featuring sharding, and replication.
 
-- sharding.toml acts a static cluster topology descriptor, encodes horizontal partitioning schema, local simulation of distributed coordination using loopback ips
+## System Overview
 
-- Bolt DB is a pure go key-value database stored in the filesystem, not server based like Redis or Cassandra.
-- ACID compliant, supports transactions.
-- All writes must occur in a read write transaction adn all reads must occur in a read transaction
-- [docs](https://pkg.go.dev/go.etcd.io/bbolt)
-- MVCC - multi verison concurrency control, instead of locking a row, keep multiple versions, readers see a consistent screenshot while writers create new versions. Lock free reads are great for OLAP workloads.
-- Better than 2PL
+This distributed key-value database implements a horizontally scalable architecture with the following key components and concepts:
 
-- B+ trees are used like SQL (umm they fan out, like binary tree but multiple ways, linked list at the leaf and doubly linked, think depth 4, but 100 ways, data only at the leaf, insertion can split a node and increase depth, they are specialy useful when you have disc based storage, binary are great for memory, but when dealing with disc based storage, you can put one node of the B+ tree in memory, so operations happen by bringing part of it to memory, and writing back to disc etc. It is self balancing, making sure minimum number of keys per node)
+### Architecture Overview
 
-- bolt uses memory mapped files, mmap, to load database into virtual memory. _single level_, just mapping no caching in between, zero-copy, read from memory as it is reading from the disk. No extra copy.
+The system consists of **4 shards** (Hyderabad, Bangalore, Mumbai, Delhi), each with a **leader-replica pair** for high availability. Data is automatically partitioned across shards using consistent hashing, and each shard maintains its own local database with asynchronous replication to its replica. Each shard is a standalone key-value server that stores data in a BoltDB file, listens on a specific address, and optionally runs as a replica (polls the leader). Replicas are read only, this is just for safety incase there are multiple replicas and you don't write to both at the same time.
 
-- bolt is append only for writes, and uses copy on write at page level. During a write, a new version of page is created, commits flush to disk. so no recovery needed.
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Hyderabad     │    │   Bangalore     │    │     Mumbai      │    │      Delhi      │
+│                 │    │                 │    │                 │    │                 │
+│ Leader: 127.0.0.2   │ Leader: 127.0.0.3   │ Leader: 127.0.0.4   │ Leader: 127.0.0.5   │
+│ Replica: 127.0.0.22  │ Replica: 127.0.0.33  │ Replica: 127.0.0.44  │ Replica: 127.0.0.55  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+```
 
-`void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);`
+### Key Concepts
 
-- so the files disc blocks mapped to virtual memory
-- load page contents lazily based on page faults.
-- bolt implements its own structure on top, with meta pages, root page node - top of B+tree,
+#### 1. **Sharding Strategy**
 
-- buckets let you use a key-value store within a key-value store, like a namespace.
-- shard is a partition of your database
-- shards are building blocks of horizontal scaling
-- server may hold one or more shards
+- **Consistent Hashing**: Uses FNV-64 hash function to deterministically map keys to shards
+- **Key Distribution**: `shard_index = hash(key) % total_shards`
+- **Automatic Routing**: Requests are automatically redirected to the correct shard
+- **Load Balancing**: Keys are evenly distributed across all shards
 
-- use as if its a slice of bytes instead of read and write operations.
-- cow, and single writer transactions
+#### 2. **Replication Model**
 
-- used in initial ETCD versions
-- []byte
-- Go through Dynamodb, supposed to be very good (also combine this with something like my url shortener instead of aws and dynamo? can explore)
+- **Leader-Replica Pattern**: Each shard has one leader and one replica
+- **Asynchronous Replication**: Pull-based replication from leader to replica
+- **Eventually Consistent**: Replicas may lag behind leaders but will eventually catch up
+- **Fault Tolerance**: If a leader fails, the replica can take over (manual failover required)
 
-Implementation techniques;
+#### 3. **Data Storage**
 
-- Sharding: split across nodes
-- Replication: copy data across nodes
-- Consistency strategies:
-  - Strong consistency (etcd, zookeeper)
-  - Eventual consistency (dynamo, cassandra)
-- Membership management: eg. Gossip protocol
-- Write coordination: quorum, vector clocks, CRDTs
+- **BoltDB**: Embedded key-value store using B+ tree for efficient range queries
+- **Dual Buckets**:
+  - `default` bucket: Main data storage
+  - `replication` bucket: Queue for pending replication operations
+- **ACID Transactions**: All operations are atomic and consistent
 
-Static Sharding:
+#### 4. **Communication Protocol**
 
-- fix assignment of keys to shards, instead of dynamic assignment. I can already see that this is bad if there are lots of collisions, it is also possible that your servers receive a certain type of data at a certain time where one type of shard is hashed to more. But it is simple assuming that your data is uniformly Distributed
+- **HTTP API**: RESTful interface for client operations
+- **Custom Binary Protocol**: Internal communication between nodes
+- **JSON Encoding**: For replication coordination messages
 
-- It's kind of like saying all books that start with A - D go to cupboard 1, E - H go to cupboard 2, etc. If you have a lot of books starting with A - D, cupboard 1 will be full and cupboard 2 will be empty.
-- But this is how real world analogies ish work right?
+### Data Flow Examples
 
-- But resharding is hard ie adding nodes. Hotspots possible.
+#### Write Operation (SET)
 
-- This contrasts with virtual node based dynamic partitioning, or auto rebalancing systems.
-- eg, Zipfian workloads - this would not work.
-- But I can already see that if you do know it is something like zipfian already, there would be a work around maybe? you know one shard would be overloaded, so just add more servers to that one? I don't konw how they do it irl.
-- global remapping and hot partition redistribution for adding and deleting is a problem
+```
+1. Client sends: PUT /set?key=user:123&value=john_doe
+2. System hashes "user:123" → determines shard (e.g., Bangalore)
+3. Request routed to Bangalore leader (127.0.0.3:8080)
+4. Leader writes to local BoltDB (both default and replication buckets)
+5. Replica (127.0.0.33:8080) polls leader for replication queue
+6. Replica applies change and acknowledges deletion from queue
+```
 
-Consistent hashing with virtual nodes - dynamo or redis
-CockroadDB, Yugabyte db - dynamic Sharding
+#### Read Operation (GET)
 
-# Some scribbles, will refactor after completing project
+```
+1. Client sends: GET /get?key=user:123
+2. System hashes "user:123" → determines shard (e.g., Bangalore)
+3. Request routed to Bangalore leader (127.0.0.3:8080)
+4. Leader reads from local BoltDB and returns value
+```
 
-Static Sharding
+#### Cross-Shard Request
 
-server("key") = hash("key")% (num shards) -> server number
-num_shards-power of two
+```
+1. Client sends: GET /get?key=user:456 to Hyderabad (127.0.0.2:8080)
+2. Hyderabad hashes "user:456" → determines it belongs to Mumbai
+3. Hyderabad redirects request to Mumbai (127.0.0.4:8080)
+4. Mumbai processes request and returns response
+```
 
-Resharding
+### Replication Process
 
-Two server - mod2 = 0, mod2 = 1
-For dividing intwo 2, consider mode 4. So the server that is 0mod2 will be 0mod4 and 2mod4, and the server that is 1mod2 will be 1mod4 and 3mod4.
+The replication system uses a **pull-based model** with the following steps:
 
-Purge the rest
+1. **Leader writes** data to both `default` and `replication` buckets
+2. **Replica polls** leader every 100ms for new replication keys
+3. **Leader responds** with next key-value pair from replication queue
+4. **Replica applies** the change to its local database
+5. **Replica acknowledges** successful replication by requesting key deletion
+6. **Leader removes** the key from replication queue
+
+### Configuration
+
+The system is configured via `sharding.toml`:
+
+```toml
+[[shards]]
+name = "Hyderabad"
+idx = 0
+address = "127.0.0.2:8080"
+replicas = ["127.0.0.22:8080"]
+```
+
+### Performance Characteristics
+
+- **Horizontal Scaling**: Add more shards to increase capacity
+- **High Availability**: Replica nodes provide fault tolerance
+- **Low Latency**: Local reads and writes within each shard
+- **Eventually Consistent**: Replicas may have slight data lag
+- **No Cross-Shard Transactions**: Each shard operates independently
+
+### Limitations and Considerations
+
+- **Single Point of Failure**: No automatic leader election
+- **Manual Failover**: Replica promotion requires manual intervention
+- **No Cross-Shard Transactions**: Cannot guarantee consistency across shards
+- **Fixed Shard Count**: Adding/removing shards requires rehashing all data
+- **Network Partition Handling**: Limited handling of network splits
+
+## Features
+
+- **Sharding:** Data is partitioned across multiple shards, allowing for horizontal scaling and improved performance.
+- **Replication:** Each shard has a leader and a set of replicas, ensuring data redundancy and high availability.
+- **Custom Binary Protocol:** A custom binary protocol is used for efficient data transfer between nodes.
+- **HTTP API:** A simple HTTP API is provided for setting, getting, and deleting keys.
+- **Benchmarking Tool:** A benchmarking tool is included for performance testing.
+
+## Getting Started
+
+### Prerequisites
+
+- Go 1.18 or higher
+
+### Installation
+
+0.
+
+Ensure you have Go installed on your machine.
+`echo 'export PATH="$HOME/go/bin:$PATH"' >> ~/.zshrc`
+`source ~/.zshrc`
+`go install ./cmd/kv`
+`go install ./cmd/benchclient`
+`which kv` # should show the path to the binary
+
+```bash
+kv             ← used by launch.sh (server)
+benchclient    ← used for load testing
+```
+
+You might need to do this
+
+```bash
+sudo ifconfig lo0 alias 127.0.0.2
+sudo ifconfig lo0 alias 127.0.0.3
+sudo ifconfig lo0 alias 127.0.0.4
+sudo ifconfig lo0 alias 127.0.0.5
+sudo ifconfig lo0 alias 127.0.0.22
+sudo ifconfig lo0 alias 127.0.0.33
+sudo ifconfig lo0 alias 127.0.0.44
+sudo ifconfig lo0 alias 127.0.0.55
+```
+
+and
+
+clean up ports incase of existing processes
+
+```bash
+for ip in 2 22 3 33 4 44 5 55; do lsof -nP -i@127.0.0.$ip:8080 | awk 'NR>1 {print $2}' | xargs kill -9 2>/dev/null || true; done
+
+```
+
+You can play around running a single leader like this
+
+```bash
+go run ./cmd/kv \
+  -db-location=data/hyderabad.db \
+  -http-addr=127.0.0.2:8080 \
+  -config-file=sharding.toml \
+  -shard=Hyderabad
+```
+
+1.  Clone the repository:
+
+    ```bash
+    git clone https://github.com/dd1235/distributed-key-value-database.git
+    ```
+
+2.  Install the dependencies:
+
+    ```bash
+    go mod tidy
+    ```
+
+### Usage
+
+1.  Launch the database:
+
+    ```bash
+    ./launch.sh
+    ```
+
+2.  Seed the database with data:
+
+    ```bash
+    ./seed_shard.sh
+    ```
+
+3.  Interact with the database using the HTTP API:
+
+    ```bash
+    # Set a key
+    curl "http://127.0.0.2:8080/set?key=my-key&value=my-value"
+
+    # Get a key
+    curl "http://127.0.0.2:8080/get?key=my-key"
+    ```
+
+## Project Structure
+
+```
+.
+├── cmd
+│   └── benchclient
+│       └── main.go
+|   └── kv
+│       └── main.go
+├── config
+│   ├── config.go
+│   └── config_test.go
+├── db
+│   ├── db.go
+│   └── db_test.go
+├── replication
+│   └── replication.go
+├── transport
+│   ├── transport.go
+│   └── transport_test.go
+├── .gitignore
+├── go.mod
+├── go.sum
+├── launch.sh
+├── main.go
+├── notes.md
+├── readme.md
+├── seed_shard.sh
+└── sharding.toml
+```

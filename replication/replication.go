@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"kv/db"
 	"log"
@@ -47,6 +48,13 @@ type client struct {
 }
 
 func ClientLoop(db *db.Database, leaderAddr string) {
+	if db == nil {
+		log.Fatalf("replication.ClientLoop: nil database passed for leader %s", leaderAddr)
+	}
+	if leaderAddr == "" {
+		log.Fatalf("replication.ClientLoop: empty leader address")
+	}
+
 	c := &client{db: db, leaderAddr: leaderAddr}
 	for {
 		present, err := c.loop()
@@ -63,26 +71,47 @@ func ClientLoop(db *db.Database, leaderAddr string) {
 }
 
 func (c *client) loop() (present bool, err error) {
-	resp, err := http.Get("http://" + c.leaderAddr + "/next-replication-key")
-	var res NextKeyValue
-	// json format to go struct
-	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		return false, err
+	const maxRetries = 10          // Retry up to 10 times before giving up
+	const retryDelay = time.Second // Wait 1s between retries
+
+	var resp *http.Response
+	for i := 0; i < maxRetries; i++ {
+		resp, err = http.Get("http://" + c.leaderAddr + "/next-replication-key")
+		if err != nil {
+			log.Printf("Loop error: could not connect to leader at %s (attempt %d/%d): %v", c.leaderAddr, i+1, maxRetries, err)
+			time.Sleep(retryDelay)
+			continue
+		}
+		break // connection succeeded
+	}
+	if err != nil {
+		return false, fmt.Errorf("replica failed to contact leader %s after %d retries: %w", c.leaderAddr, maxRetries, err)
 	}
 	defer resp.Body.Close()
 
-	if res.Err != nil {
-		return false, err
+	var res NextKeyValue
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		return false, fmt.Errorf("failed to decode response from leader: %w", err)
 	}
+
+	// Server might return an error inside response (e.g., no more keys to replicate)
+	if res.Err != nil {
+		return false, fmt.Errorf("server-side error during replication: %v", res.Err)
+	}
+
 	if res.Key == "" {
+		// Nothing to replicate currently
 		return false, nil
 	}
+
 	if err := c.db.SetKeyOnReplica(res.Key, []byte(res.Value)); err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to set key on replica: %w", err)
 	}
+
 	if err := c.deleteFromReplicationQueue(res.Key, res.Value); err != nil {
-		log.Printf("DeleteKeyFromReplication failed: %v", err)
+		log.Printf("Warning: DeleteKeyFromReplication failed for key %q: %v", res.Key, err)
 	}
+
 	return true, nil
 }
 
