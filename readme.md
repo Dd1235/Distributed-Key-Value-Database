@@ -407,34 +407,3 @@ You might need to run `chmod +x launch.sh seed_shard.sh run_benchmark.sh run_ful
     # Get a key
     curl "http://127.0.0.2:8080/get?key=my-key"
     ```
-
-## Project Structure
-
-```
-.
-├── cmd
-│   └── benchclient
-│       └── main.go
-|   └── kv
-│       └── main.go
-├── config
-│   ├── config.go
-│   └── config_test.go
-├── db
-│   ├── db.go
-│   └── db_test.go
-├── replication
-│   └── replication.go
-├── transport
-│   ├── transport.go
-│   └── transport_test.go
-├── .gitignore
-├── go.mod
-├── go.sum
-├── launch.sh
-├── main.go
-├── notes.md
-├── readme.md
-├── seed_shard.sh
-└── sharding.toml
-```
