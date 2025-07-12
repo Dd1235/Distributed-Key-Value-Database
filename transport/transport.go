@@ -108,7 +108,7 @@ func (s *Server) DeleteReplicationKey(w http.ResponseWriter, r *http.Request) {
 	key := r.Form.Get("key")
 	value := r.Form.Get("value")
 
-	// fmt.Printf("🧼 REPLICATION ACK: Deleting key=%s, value=%s from queue\n", key, value)
+	// fmt.Printf("ACK: Deleting key=%s, value=%s from queue\n", key, value)
 
 	err := s.db.DeleteReplicationKey([]byte(key), []byte(value))
 	if err != nil {
