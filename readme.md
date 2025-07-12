@@ -34,16 +34,16 @@ shard 3: Delhi - `127.0.0.5:8080`, replica: `127.0.55:8080`
 ➡️ PUT /set?key=key-7986636&value=value-2 → target shard: 2 | current shard: 2
 ✅ SET served locally: key=key-7986636, value=value-2, error=<nil>
 ... ( i am removing some of the outputs for brevity)
-🧼 REPLICATION ACK: Deleting key=key-7986636, value=value-2 from queue
-🧼 REPLICATION ACK: Deleting key=key-546221475, value=value-7 from queue
+ REPLICATION ACK: Deleting key=key-7986636, value=value-2 from queue
+ REPLICATION ACK: Deleting key=key-546221475, value=value-7 from queue
 ✅ REPLICATION DELETE successful
 ✅ REPLICATION DELETE successful
 ✅ REPLICATION DELETE successful
 2025/07/12 15:17:24 Deleting key="key-51863328", value="value-6" from replication queue on "127.0.0.5:8080"
-🧼 REPLICATION ACK: Deleting key=key-51863328, value=value-6 from queue
+ REPLICATION ACK: Deleting key=key-51863328, value=value-6 from queue
 ✅ REPLICATION DELETE successful
 2025/07/12 15:17:24 Deleting key="key-676220700", value="value-10" from replication queue on "127.0.0.5:8080"
-🧼 REPLICATION ACK: Deleting key=key-676220700, value=value-10 from queue
+ REPLICATION ACK: Deleting key=key-676220700, value=value-10 from queue
 ✅ REPLICATION DELETE successful
 ```
 
